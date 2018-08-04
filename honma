@@ -1,0 +1,42 @@
+#!/bin/bash
+
+COMMANDS=$@
+COLOR=34
+
+function prompt {
+  [ $# -gt 0 ] && MESSAGE="$@ " || MESSAGE='> '
+  echo -ne "\e[34m${MESSAGE}\e[m"
+}
+
+function main {
+  while read LINE; do
+    if [[ "${LINE}" = ':quit' ]]; then 
+      exit
+    elif [[ "${LINE}" =~ ^\/.+$ ]]; then
+      TMP=()
+      TMP=(${LINE:1})
+      COMMANDS+=(${TMP[@]})
+    elif [[ "${LINE}" =~ ^\.\.$ ]]; then
+      unset COMMANDS[$((${#COMMANDS[@]}-1))]; COMMANDS=("${COMMANDS[@]}")
+    elif [[ "${LINE}" = '' ]]; then
+      :
+    else
+      ${COMMANDS[@]} ${LINE}
+    fi
+
+    prompt ${COMMANDS[@]}
+  done
+}
+
+function graceful_exit {
+  echo 'exit'
+}
+
+trap 'graceful_exit' exit
+
+trap 'main' 1 2 3 15
+
+echo 'To exit, use '\'':quit'\'' or Ctrl-D'
+prompt ${COMMANDS[@]}
+main
+
